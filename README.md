@@ -138,3 +138,13 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Admin UI
+
+Run `npm run start:dev`, then open `http://localhost:3000/admin`.
+The TypeScript page in `src/admin.page.ts` follows the basic modules in
+`lumina-cms`: overview, accounts, roles, file library, and general settings.
+You can search/filter accounts, add/remove sample accounts, inspect role
+counts, select/remove local files, and update workspace details.
+All changes last for the current page session; this UI has no authentication
+or connection to the Lumina CMS API. Selecting files does not upload them.

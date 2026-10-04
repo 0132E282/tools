@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Header } from '@nestjs/common';
 import { AppService } from './app.service.js';
+import { adminPage } from './admin.page.js';
 
 @Controller()
 export class AppController {
@@ -8,5 +9,11 @@ export class AppController {
   @Get()
   getHello(): string {
     return this.appService.getHello();
+  }
+
+  @Get('admin')
+  @Header('Content-Type', 'text/html; charset=utf-8')
+  getAdmin(): string {
+    return adminPage;
   }
 }
