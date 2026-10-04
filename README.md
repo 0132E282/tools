@@ -57,18 +57,34 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
-## Deployment
+## Deployment on Vercel
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Production URL: https://tools-ruby-eight.vercel.app/
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+This project uses Vercel’s native NestJS support with the entry point in
+`src/main.ts`. Vercel compiles the application into a function; the
+`vercel.json` configuration selects the NestJS preset and clears custom build
+and output directory overrides. Node.js 24 is selected through `package.json`.
+
+In the existing Vercel project, connect the GitHub repository
+`0132E282/tools` and set the Root Directory to the repository root (`./`).
+Use `main` as the production branch. Pushing to `main` triggers production
+deployments when the Git integration is connected.
+
+For CLI deployment, authenticate and link to the existing project:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npx --yes vercel@62.2.0 login
+npx --yes vercel@62.2.0 link
+npm run deploy
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Select the account/team and existing project that owns the production URL.
+The local `.vercel/` directory is ignored by Git.
+
+After deployment, `GET /` should return `Hello World!`.
+
+See [NestJS on Vercel](https://vercel.com/docs/frameworks/backend/nestjs).
 
 ## Observability
 
