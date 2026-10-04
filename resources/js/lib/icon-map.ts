@@ -1,0 +1,41 @@
+import {
+    Activity,
+    FileText,
+    FolderOpen,
+    GalleryHorizontal,
+    History,
+    Key,
+    LayoutDashboard,
+    Mail,
+    Megaphone,
+    Newspaper,
+    Search,
+    ShieldCheck,
+    ShoppingBag,
+    ShoppingCart,
+    SlidersHorizontal,
+    Users,
+    Webhook,
+} from 'lucide-react';
+import type { ComponentType } from 'react';
+
+/** * lucide-react export name (from `config/views.php`) → component. */
+export const ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
+    Activity,
+    FileText,
+    FolderOpen,
+    GalleryHorizontal,
+    History,
+    Key,
+    LayoutDashboard,
+    Mail,
+    Megaphone,
+    Newspaper,
+    Search,
+    ShieldCheck,
+    ShoppingBag,
+    ShoppingCart,
+    SlidersHorizontal,
+    Users,
+    Webhook,
+};
