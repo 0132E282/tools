@@ -27,64 +27,138 @@
 
 ## Project setup
 
+Run commands from the repository root (from `api/`, run `cd ..` first):
+
 ```bash
-$ npm install
+nvm use
+pnpm install --frozen-lockfile
+cp .env.example .env
+docker compose --env-file .env -f api/docker-compose.yml up -d
 ```
+
+Start both the API and the React client with `pnpm dev`. Open
+`http://localhost:3000` for the client and `/api/tools` for the API. The API reads the root `.env` independently of the working directory.
+Docker Compose uses the same file through `--env-file .env`.
+
+Dependencies are managed by the root `package.json`, `pnpm-lock.yaml`, and
+`node_modules/`. Do not install separate dependencies inside `api/` or `Client/`.
+Shared Prettier and Oxlint settings also live at the root. The frontend HTML entry
+and Vite/TypeScript configuration stay in `Client/`; NestJS/TypeScript/test
+configuration stays in `api/`.
+
+## Tools API
+
+The API stores tools with a required `name` and optional `description`:
+
+| Method   | Endpoint         | Description   |
+| -------- | ---------------- | ------------- |
+| `POST`   | `/api/tools`     | Create a tool |
+| `GET`    | `/api/tools`     | List tools    |
+| `GET`    | `/api/tools/:id` | Get a tool    |
+| `PATCH`  | `/api/tools/:id` | Update a tool |
+| `DELETE` | `/api/tools/:id` | Delete a tool |
+
+Example create request:
+
+```json
+{ "name": "MySQL", "description": "Database" }
+```
+
+The app reads `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME`.
+`DB_SYNCHRONIZE=true` lets TypeORM create/update the schema for local development;
+keep it `false` in production. Before deploying, apply `database/schema.sql` to
+the production database and configure the same connection variables in Vercel.
 
 ## Compile and run the project
 
 ```bash
 # development
-$ npm run start
+$ pnpm run start
 
 # watch mode
-$ npm run start:dev
+$ pnpm run start:dev
 
 # production mode
-$ npm run start:prod
+$ pnpm run start:prod
 ```
 
 ## Run tests
 
 ```bash
 # unit tests
-$ npm run test
+$ pnpm run test
 
 # e2e tests
-$ npm run test:e2e
+$ pnpm run test:e2e
 
 # test coverage
-$ npm run test:cov
+$ pnpm run test:cov
 ```
+
+Client requests share an Axios instance in `Client/src/api/apiService.ts`, with
+same-origin `/api`, a 15-second timeout, session cookies, cancellation through
+`AbortSignal`, and readable backend errors. Domain API modules validate response
+payloads before returning them to components.
+
+## Google Calendar
+
+Connect a Google account to view calendars and upcoming events, and create events
+on calendars you can edit. OAuth credentials must be configured before connecting.
+See [Google Calendar setup](docs/google-calendar.md) for Google Cloud, environment variables, and
+production callback configuration. Calendar sessions use encrypted HttpOnly cookies;
+Google tokens remain on the backend.
 
 ## Deployment on Vercel
 
 Production URL: https://tools-ruby-eight.vercel.app/
 
-This project uses Vercel’s native NestJS support with the entry point in
-`src/main.ts`. Vercel compiles the application into a function; the
-`vercel.json` configuration selects the NestJS preset and clears custom build
-and output directory overrides. Node.js 24 is selected through `package.json`.
+Deploy the repository root, with **Root Directory left empty** and the
+**Other** framework preset. The root `vercel.json` explicitly builds only `api/index.mjs` as the Node.js
+function and builds `Client/dist` as static output. This prevents backend source
+and test files inside `api/` from becoming separate Vercel functions.
+It rewrites `/api` and `/api/*` to the NestJS handler. Remove previous dashboard build/output
+command overrides. Node.js 24 is selected by the root `package.json`.
 
-In the existing Vercel project, connect the GitHub repository
-`0132E282/tools` and set the Root Directory to the repository root (`./`).
-Use `main` as the production branch. Pushing to `main` triggers production
-deployments when the Git integration is connected.
+- `/` serves the admin login screen from `Client/`. There is no public website route.
+- `/api` returns `Hello World!`.
+- `/api/tools` exposes the tools CRUD API.
+- Unknown API routes return backend 404 responses.
 
-For CLI deployment, authenticate and link to the existing project:
+The admin reads real data from `/api/tools` and supports searching by name or
+description, loading, empty, and error/retry states.
 
-```bash
-npx --yes vercel@62.2.0 login
-npx --yes vercel@62.2.0 link
-npm run deploy
-```
+The admin login is the default screen at `/` (also available at `/#/admin/login`), with a separate preview link
+to `/#/admin`. It uses Tailwind CSS 4 via the official Vite plugin and follows the Lumina CMS
+sidebar, card, and form patterns, including its login illustration. The Tools
+page uses shadcn/ui components and TanStack Table v8 for sorting, search, column
+visibility, row selection, pagination, and row actions. Components live in
+`Client/src/components/ui/`; the domain table is
+`Client/src/components/tools/ToolsDataTable.tsx`.
+Pages live in `Client/src/pages/`: `auth/LoginPage.tsx`,
+`admin/DashboardPage.tsx`, `admin/ToolsPage.tsx`, and `admin/CalendarPage.tsx`. Shared sidebar/header live in
+`Client/src/layouts/AdminLayout.tsx`; `App.tsx` handles hash navigation.
+`/#/admin/tools` supports searching, pagination, and creating/editing tools through
+the existing API; `/#/admin/calendar` reuses Google Calendar. The login screen offers Google OAuth through `/api/calendar/connect` and checks
+`/api/calendar/status` for configuration and an existing connection. Google
+OAuth connects Calendar; admin authentication and backend authorization for Tools
+are not implemented. The preview is public, and the existing tools
+API remains unchanged.
 
-Select the account/team and existing project that owns the production URL.
-The local `.vercel/` directory is ignored by Git.
+For local development, run `pnpm install --frozen-lockfile` once, then `pnpm dev`.
+NestJS hosts Vite middleware and the API on a single HTTP server. The root `.env`
+selects `PORT` (default: `3000`); React hot reload uses the same server.
+API routes bypass Vite, so unknown `/api/*` routes keep backend 404 responses.
 
-After deployment, `GET /` should return `Hello World!`.
+Run `pnpm run build` from the root to build both applications.
 
-See [NestJS on Vercel](https://vercel.com/docs/frameworks/backend/nestjs).
+Configure `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and
+`DB_SYNCHRONIZE=false` in Vercel. Apply the schema manually before deployment.
+
+Link the repository root to the existing Vercel project, then deploy from the
+root using your installed Vercel CLI (`vercel link`, `vercel --prod`). Use `main`
+as the production branch for Git integration. Do not deploy from `api/`.
+
+See [Vercel Node.js functions](https://vercel.com/docs/functions/runtimes/node-js).
 
 ## Observability
 
@@ -104,7 +178,7 @@ In production applications, observability is essential for understanding how you
 To add it to this project:
 
 ```bash
-$ npm install @nestjs/observe
+$ pnpm add @nestjs/observe
 ```
 
 Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
@@ -138,13 +212,3 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
-
-## Admin UI
-
-Run `npm run start:dev`, then open `http://localhost:3000/admin`.
-The TypeScript page in `src/admin.page.ts` follows the basic modules in
-`lumina-cms`: overview, accounts, roles, file library, and general settings.
-You can search/filter accounts, add/remove sample accounts, inspect role
-counts, select/remove local files, and update workspace details.
-All changes last for the current page session; this UI has no authentication
-or connection to the Lumina CMS API. Selecting files does not upload them.

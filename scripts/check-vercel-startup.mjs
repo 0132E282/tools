@@ -13,7 +13,7 @@ http.Server.prototype.listen = function () {
   return this;
 };
 
-const loaded = Promise.all([import('../dist/main.js'), serverReady]).then(() => true);
+const loaded = Promise.all([import('../api/dist/main.js'), serverReady]).then(() => true);
 const completed = await Promise.race([
   loaded,
   new Promise((resolve) => setTimeout(() => resolve(false), 1500)),
