@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   BadRequestException,
@@ -22,10 +23,23 @@ export class PostsController {
     return this.postsService.create(createPostDto);
   }
 
-  @Post('list')
-  @HttpCode(HttpStatus.OK)
-  findAll(): Promise<PostEntity[]> {
+  @Get(['', 'list'])
+  findAllGet(): Promise<PostEntity[]> {
     return this.postsService.findAll();
+  }
+
+  @Post(['', 'list'])
+  @HttpCode(HttpStatus.OK)
+  findAllPost(): Promise<PostEntity[]> {
+    return this.postsService.findAll();
+  }
+
+  @Get([':id', 'detail', 'detail/:id'])
+  findOneGet(
+    @Body('id') bodyId?: number | string,
+    @Param('id') paramId?: string,
+  ): Promise<PostEntity> {
+    return this.findOne(bodyId, paramId);
   }
 
   @Post(['detail', 'detail/:id'])
