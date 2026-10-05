@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "Client/dist",
   "rewrites": [
     {
       "source": "/api",
@@ -13,22 +14,6 @@
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
-    }
-  ],
-  "builds": [
-    {
-      "src": "api/index.mjs",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["api/dist/**"]
-      }
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "Client/dist"
-      }
     }
   ]
 }
